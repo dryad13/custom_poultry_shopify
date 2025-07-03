@@ -1,0 +1,101 @@
+{% comment %}
+  Egg Subscription Main Section
+  - Pulls all dynamic data from store metafields (namespace: subscriptions)
+  - Renders all UI components
+  - Passes metafield data to JS via data attributes or inline script
+  - Uses snippet for custom calendar
+  - Includes hero, quantity selector, delivery area, price breakdown, testimonials, FAQ, and Subscribe button
+  - All UI text and values are easily editable via metafields
+{% endcomment %}
+
+<section id="egg-subscription" class="section egg-subscription-section">
+  <!-- Hero Section -->
+  <div class="egg-subscription-hero">
+    <h1 class="egg-subscription-title">{{ 'Fresh Eggs Delivered to Your Door' }}</h1>
+    <p class="egg-subscription-subtitle">{{ 'Flexible subscriptions. Farm-fresh quality. Cancel anytime.' }}</p>
+    <button class="egg-subscription-cta" id="egg-subscription-cta">Get Fresh Eggs Delivered</button>
+  </div>
+
+  <!-- Main Subscription Form -->
+  <form id="egg-subscription-form" class="egg-subscription-form" autocomplete="off">
+    <!-- Quantity Selector -->
+    <div class="egg-quantity-selector">
+      <label for="egg-quantity">Eggs per delivery</label>
+      <div class="egg-quantity-controls">
+        <button type="button" class="egg-qty-btn" id="egg-qty-decrement" aria-label="Decrease quantity">-</button>
+        <input type="number" id="egg-quantity" name="egg-quantity" min="{{ shop.metafields.subscriptions.egg_min_quantity.value | default: 6 }}" max="{{ shop.metafields.subscriptions.egg_max_quantity.value | default: 60 }}" value="{{ shop.metafields.subscriptions.egg_min_quantity.value | default: 6 }}" readonly />
+        <button type="button" class="egg-qty-btn" id="egg-qty-increment" aria-label="Increase quantity">+</button>
+      </div>
+    </div>
+
+    <!-- Calendar (multi-date picker) -->
+    <div class="egg-calendar-section">
+      <label for="egg-calendar">Select delivery dates</label>
+      {% render 'subscription-calendar' %}
+      <div id="egg-calendar-summary" class="egg-calendar-summary"></div>
+    </div>
+
+    <!-- Delivery Area Input -->
+    <div class="egg-delivery-area-section">
+      <label for="egg-delivery-area">Delivery Area</label>
+      <select id="egg-delivery-area" name="egg-delivery-area">
+        {% assign areas = shop.metafields.subscriptions.delivery_areas.value | parse_json %}
+        {% for area_name, area_data in areas %}
+          <option value="{{ area_name }}" data-fee="{{ area_data.fee }}" data-zip="{{ area_data.zip }}">{{ area_name }} ({{ area_data.zip }})</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Real-Time Price Calculator -->
+    <div class="egg-price-breakdown" id="egg-price-breakdown">
+      <!-- JS will populate this -->
+    </div>
+
+    <!-- Subscribe Now Button -->
+    <button type="submit" class="egg-subscribe-btn" id="egg-subscribe-btn">Subscribe Now</button>
+    <div class="egg-subscribe-note">* You'll be redirected to checkout. Subscription powered by Shopify.</div>
+  </form>
+
+  <!-- Social Proof / Testimonials -->
+  <div class="egg-testimonials-section">
+    <h2>What Our Customers Say</h2>
+    <div class="egg-testimonials-list">
+      {% assign testimonials = shop.metafields.subscriptions.testimonials.value | parse_json %}
+      {% for testimonial in testimonials %}
+        <div class="egg-testimonial">
+          <p class="egg-testimonial-text">"{{ testimonial.text }}"</p>
+          <span class="egg-testimonial-name">— {{ testimonial.name }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- FAQ Accordion -->
+  <div class="egg-faq-section">
+    <h2>Frequently Asked Questions</h2>
+    <div class="egg-faq-list">
+      {% assign faqs = shop.metafields.subscriptions.faq.value | parse_json %}
+      {% for faq in faqs %}
+        <div class="egg-faq-item">
+          <button class="egg-faq-question" aria-expanded="false">{{ faq.q }}</button>
+          <div class="egg-faq-answer" hidden>{{ faq.a }}</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<script>
+  window.eggSubscriptionSettings = {
+    unitPrice: {{ shop.metafields.subscriptions.egg_unit_price.value | default: 0.5 }},
+    minQuantity: {{ shop.metafields.subscriptions.egg_min_quantity.value | default: 6 }},
+    maxQuantity: {{ shop.metafields.subscriptions.egg_max_quantity.value | default: 60 }},
+    deliveryAreas: {{ shop.metafields.subscriptions.delivery_areas.value | default: '{}' }},
+    taxEnabled: {{ shop.taxes_included | json }},
+    currency: '{{ shop.currency }}'
+  };
+</script>
+
+{% comment %} Load custom JS and CSS {% endcomment %}
+{{ 'egg-subscription.css' | asset_url | stylesheet_tag }}
+{{ 'egg-subscription.js' | asset_url | script_tag }} 
